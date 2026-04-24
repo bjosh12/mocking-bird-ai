@@ -13,6 +13,10 @@
     "directories": {
       "output": "release"
     },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
     "publish": [
       {
         "provider": "github",
