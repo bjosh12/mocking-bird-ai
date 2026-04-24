@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@layer base {
+  :root {
+    --background: 240 15% 4%;
+    --foreground: 0 0% 96%;
+    --card: 240 12% 6%;
+    --card-foreground: 0 0% 96%;
+    --popover: 240 12% 6%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 262 83% 73%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 8% 12%;
+    --secondary-foreground: 0 0% 80%;
+    --muted: 240 8% 10%;
+    --muted-foreground: 240 5% 55%;
+    --accent: 262 60% 25%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 6% 12%;
+    --input: 240 8% 8%;
+    --ring: 262 83% 73%;
+    --radius: 0.625rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Premium scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(167,139,250,0.2); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(167,139,250,0.4); }
+
+  /* Selection color */
+  ::selection { background: rgba(167,139,250,0.25); color: #fff; }
+}
