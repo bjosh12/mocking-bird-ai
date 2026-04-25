@@ -10,11 +10,7 @@ permissions:
 
 jobs:
   release:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [windows-latest] # macOS build disabled until signing creds are set up
+    runs-on: windows-latest # macOS build disabled until signing creds are set up
 
     steps:
       - name: Check out git repository
@@ -29,17 +25,20 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # Create the GitHub Release explicitly so electron-builder has a target to upload to
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
         with:
-          # GitHub token, set by default
           github_token: ${{ secrets.GITHUB_TOKEN }}
-
-          # If the commit is tagged with a version (e.g. "v1.0.0"),
-          # release the app after building
           release: true
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
-          # Removed empty WIN_CSC_LINK as it was causing path resolution errors on Windows
-          # For macOS signing, you would add APPLE_ID/PASSWORD secrets here in the future
-
