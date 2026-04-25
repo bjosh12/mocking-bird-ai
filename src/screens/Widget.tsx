@@ -61,7 +61,7 @@ export function Widget() {
           WebkitAppRegion: 'drag'
         } as any}
       >
-        <span>INTERVIEW COPILOT</span>
+        <span>THE CLOSER AI</span>
         
         {showControls && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', WebkitAppRegion: 'no-drag' } as any}>

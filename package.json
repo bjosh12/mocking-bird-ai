@@ -1,15 +1,15 @@
 {
-  "name": "interview-copilot",
-  "version": "2.0.4",
+  "name": "the-closer-ai",
+  "version": "2.0.5",
   "description": "Cross-platform AI interview assistant",
   "main": "dist-electron/main.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bjosh12/interview-copilot.git"
+    "url": "https://github.com/bjosh12/the-closer-ai.git"
   },
   "build": {
-    "appId": "com.interviewcopilot.app",
-    "productName": "Interview-Copilot",
+    "appId": "com.thecloser.app",
+    "productName": "The-Closer-AI",
     "directories": {
       "output": "release"
     },
@@ -21,7 +21,7 @@
       {
         "provider": "github",
         "owner": "bjosh12",
-        "repo": "interview-copilot"
+        "repo": "the-closer-ai"
       }
     ],
     "win": {
@@ -39,7 +39,7 @@
       "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Interview Copilot",
+      "shortcutName": "The Closer AI",
       "installerIcon": "public/icon.ico",
       "uninstallerIcon": "public/icon.ico",
       "deleteAppDataOnUninstall": false
