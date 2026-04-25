@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [windows-latest, macos-latest] # Add ubuntu-latest if needed
+        os: [windows-latest] # macOS build disabled until signing creds are set up
 
     steps:
       - name: Check out git repository
