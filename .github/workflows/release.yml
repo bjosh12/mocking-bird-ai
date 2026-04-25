@@ -29,7 +29,10 @@ jobs:
         uses: samuelmeuli/action-electron-builder@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # draft: false is now set in package.json publish config
           release: true
+          # Publish as non-draft so release is visible on GitHub Releases page
+          args: --publish always
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          EP_DRAFT: false
+          EP_PRE_RELEASE: false
