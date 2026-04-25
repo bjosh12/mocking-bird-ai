@@ -13,27 +13,43 @@ import { CloudLogin } from './screens/CloudLogin';
 import { WhatsNewModal } from './components/WhatsNewModal';
 
 function App() {
-  const { currentView, setDocuments, setCurrentView } = useStore();
+  const { currentView, setDocuments, setCurrentView, setCloudUser } = useStore();
   const [isWidget, setIsWidget] = useState(false);
   const [whatsNew, setWhatsNew] = useState<{ version: string } | null>(null);
+  const [isBooting, setIsBooting] = useState(true); // show nothing while restoring session
 
   useEffect(() => {
     if ((window as any).electronAPI) {
       (window as any).electronAPI.db.getDocuments().then(setDocuments);
 
-      // First-run detection → show onboarding before login
-      (window as any).electronAPI.app.isFirstRun().then((isFirst: boolean) => {
-        if (isFirst && currentView === 'cloud-login') {
-          setCurrentView('onboarding');
+      // ── STEP 1: Try to restore an existing Supabase session ─────────────
+      (window as any).electronAPI.cloud.getUser().then(async (user: any) => {
+        if (user) {
+          // Already logged in — skip login & onboarding entirely
+          setCloudUser(user);
+          setCurrentView('home');
+        } else {
+          // Not logged in — check if this is a first-ever launch
+          const isFirst = await (window as any).electronAPI.app.isFirstRun();
+          // First run: go to onboarding (which will redirect to login after)
+          // Returning user: go to login
+          setCurrentView(isFirst ? 'onboarding' : 'cloud-login');
         }
+        setIsBooting(false);
+      }).catch(() => {
+        setCurrentView('cloud-login');
+        setIsBooting(false);
       });
 
-      // What's New after update
+      // ── STEP 2: What's New after an update ───────────────────────────────
       (window as any).electronAPI.app.getWhatsNew().then(
         ({ isNew, version }: { isNew: boolean; version: string }) => {
           if (isNew) setWhatsNew({ version });
         }
       );
+    } else {
+      // Running in browser (dev without Electron) — skip straight to login
+      setIsBooting(false);
     }
   }, []);
 
@@ -42,6 +58,19 @@ function App() {
   }, []);
 
   if (isWidget) return <Widget />;
+
+  // Show nothing while we're checking the session — prevents flash of login screen
+  if (isBooting) {
+    return (
+      <div style={{ height: '100vh', width: '100vw', background: '#09090b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ width: 48, height: 48, border: '3px solid rgba(167,139,250,0.2)', borderTopColor: '#a78bfa', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem' }}>Loading Mocking Bird AI...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen w-screen flex flex-col bg-background text-foreground font-sans antialiased selection:bg-primary selection:text-primary-foreground overflow-hidden">

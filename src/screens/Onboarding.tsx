@@ -29,7 +29,7 @@ export function Onboarding() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name || !resumeText) return;
 
     const newProfile = {
@@ -44,9 +44,12 @@ export function Onboarding() {
     
     if ((window as any).electronAPI) {
        (window as any).electronAPI.db.saveProfile(newProfile);
+       // ✅ Mark onboarding complete — will never show again
+       await (window as any).electronAPI.app.completeOnboarding();
     }
     
-    setCurrentView('home');
+    // Go to login to create/sign in to their account
+    setCurrentView('cloud-login');
   };
 
   return (

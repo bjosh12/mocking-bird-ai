@@ -11,6 +11,7 @@ export function Settings() {
   const [updateVersion, setUpdateVersion] = useState('');
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const [launchAtStartup, setLaunchAtStartup] = useState(false);
+  const [updateChecking, setUpdateChecking] = useState(false);
 
   useEffect(() => {
     if ((window as any).electronAPI) {
@@ -168,19 +169,20 @@ export function Settings() {
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
               {[
-                { keys: 'Alt + C', desc: 'Show / Hide widget' },
-                { keys: 'Alt + S', desc: 'Start / Stop session' },
-                { keys: 'Alt + A', desc: 'Generate AI answer' },
-                { keys: 'Alt + X', desc: 'Clear transcript' },
-                { keys: 'Ctrl + ,', desc: 'Open Settings' },
-                { keys: 'Ctrl + H', desc: 'View history' },
-              ].map(({ keys, desc }) => (
-                <div key={keys} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '0.5rem 0.75rem' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>{desc}</span>
+                { keys: 'Alt + C', desc: 'Show / Hide widget', works: true },
+                { keys: 'Alt + S', desc: 'Start / Stop session', works: false },
+                { keys: 'Alt + A', desc: 'Generate AI answer', works: false },
+                { keys: 'Alt + X', desc: 'Clear transcript', works: false },
+                { keys: 'Ctrl + ,', desc: 'Open Settings', works: false },
+                { keys: 'Ctrl + H', desc: 'View history', works: false },
+              ].map(({ keys, desc, works }) => (
+                <div key={keys} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '0.5rem 0.75rem', opacity: works ? 1 : 0.45 }}>
+                  <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>{desc}{!works && <span style={{ fontSize: '0.65rem', color: '#f59e0b', marginLeft: 4 }}>(soon)</span>}</span>
                   <code style={{ background: 'rgba(167,139,250,0.15)', color: '#a78bfa', padding: '0.15rem 0.5rem', borderRadius: 5, fontSize: '0.7rem', fontWeight: 700 }}>{keys}</code>
                 </div>
               ))}
             </div>
+            <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.2)', marginTop: '0.5rem' }}>Only <strong style={{ color: 'rgba(255,255,255,0.35)' }}>Alt + C</strong> is active. Others are global shortcuts coming in the next update.</p>
           </div>
 
           {/* Preferences Card */}
@@ -244,8 +246,19 @@ export function Settings() {
                 </div>
                 {lastChecked && <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.25)' }}>Last checked: {lastChecked.toLocaleTimeString()}</span>}
               </div>
-              <button onClick={() => (window as any).electronAPI?.app.checkForUpdates()} style={{ padding: '0.4rem 0.875rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>
-                Check for Updates
+              <button
+                disabled={updateChecking}
+                onClick={async () => {
+                  setUpdateChecking(true);
+                  setUpdateStatus('checking');
+                  setLastChecked(new Date());
+                  await (window as any).electronAPI?.app.checkForUpdates();
+                  // Give it 3s then reset spinner (actual result comes via onUpdateStatus)
+                  setTimeout(() => setUpdateChecking(false), 3000);
+                }}
+                style={{ padding: '0.4rem 0.875rem', background: updateChecking ? 'rgba(167,139,250,0.15)' : 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: updateChecking ? '#a78bfa' : 'rgba(255,255,255,0.6)', fontSize: '0.75rem', fontWeight: 600, cursor: updateChecking ? 'default' : 'pointer', transition: 'all 0.2s' }}
+              >
+                {updateChecking ? '⟳ Checking...' : 'Check for Updates'}
               </button>
             </div>
           </div>
