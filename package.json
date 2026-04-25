@@ -21,7 +21,9 @@
       {
         "provider": "github",
         "owner": "bjosh12",
-        "repo": "mocking-bird-ai"
+        "repo": "mocking-bird-ai",
+        "draft": false,
+        "prerelease": false
       }
     ],
     "win": {
