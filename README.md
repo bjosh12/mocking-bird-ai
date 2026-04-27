@@ -8,10 +8,11 @@
   [![Release](https://img.shields.io/github/v/release/bjosh12/mocking-bird-ai?style=flat-square)](https://github.com/bjosh12/mocking-bird-ai/releases)
   [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-lightgrey?style=flat-square)](https://github.com/bjosh12/mocking-bird-ai/releases)
   
-  <p align="center">
-    Real-time AI suggestions that sync with your resume, knowledge base, and job description. Featuring Ghost Mode and Global Hotkeys for full discretion during live interviews.
   </p>
 </div>
+
+> [!TIP]
+> **Check the [KNOWLEDGE_BASE.md](./KNOWLEDGE_BASE.md)** for detailed architecture, deployment guides, and troubleshooting for common Windows quirks.
 
 ---
 
