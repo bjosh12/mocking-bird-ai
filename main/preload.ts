@@ -104,6 +104,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.removeAllListeners(channel);
     },
     quit: () => ipcRenderer.send('app:quit'),
-    getSources: () => ipcRenderer.invoke('app:getSources'),
   },
 });
