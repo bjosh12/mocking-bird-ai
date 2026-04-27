@@ -214,6 +214,10 @@ ipcMain.handle('app:checkForUpdates', async () => {
     throw err;
   }
 });
+ipcMain.handle('app:getSources', async () => {
+  const sources = await desktopCapturer.getSources({ types: ['screen', 'window'] });
+  return sources.map(s => ({ id: s.id, name: s.name }));
+});
 ipcMain.handle('app:installUpdate', () => autoUpdater.quitAndInstall());
 
 ipcMain.handle('app:getLaunchAtStartup', () => app.getLoginItemSettings().openAtLogin);

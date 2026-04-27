@@ -16,13 +16,24 @@ export class AudioRecorder {
   async start() {
     try {
       if (this.mode === 'system') {
-        this.stream = await (navigator.mediaDevices as any).getDisplayMedia({
-          audio: true,
-          video: true
-        }) as MediaStream;
-        // We cannot stop the video track here because in Chromium/Electron, stopping the 
-        // video track of a display media stream will terminate the entire stream (including audio).
-        // Instead, we just disable the track to reduce processing.
+        const sources = await (window as any).electronAPI.app.getSources();
+        const screenSource = sources.find((s: any) => s.id.startsWith('screen')) || sources[0];
+        
+        this.stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            mandatory: {
+              chromeMediaSource: 'desktop'
+            }
+          } as any,
+          video: {
+            mandatory: {
+              chromeMediaSource: 'desktop',
+              chromeMediaSourceId: screenSource.id
+            }
+          } as any
+        });
+        
+        // Disable video track to save CPU
         if (this.stream) this.stream.getVideoTracks().forEach(track => { track.enabled = false; });
       } else {
         this.stream = await navigator.mediaDevices.getUserMedia({ 

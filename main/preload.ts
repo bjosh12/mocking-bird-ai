@@ -75,6 +75,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   app: {
     getVersion: () => ipcRenderer.invoke('app:getVersion'),
+    getSources: () => ipcRenderer.invoke('app:getSources'),
     checkForUpdates: () => ipcRenderer.invoke('app:checkForUpdates'),
     installUpdate: () => ipcRenderer.invoke('app:installUpdate'),
     getLaunchAtStartup: () => ipcRenderer.invoke('app:getLaunchAtStartup'),
