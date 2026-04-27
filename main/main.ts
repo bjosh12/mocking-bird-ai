@@ -38,8 +38,8 @@ function setupAutoUpdater() {
   });
   autoUpdater.on('error', (err) => send(`error:${err.message}`));
 
-  autoUpdater.checkForUpdatesAndNotify();
-  setInterval(() => autoUpdater.checkForUpdatesAndNotify(), 4 * 60 * 60 * 1000);
+  autoUpdater.checkForUpdates();
+  setInterval(() => autoUpdater.checkForUpdates(), 4 * 60 * 60 * 1000);
 }
 
 // ─── System Tray ──────────────────────────────────────────────────────────────
@@ -198,7 +198,7 @@ ipcMain.on('window:toggle-maximize', () => {
 ipcMain.handle('app:getVersion', () => app.getVersion());
 ipcMain.handle('app:checkForUpdates', async () => {
   try {
-    const result = await autoUpdater.checkForUpdatesAndNotify();
+    const result = await autoUpdater.checkForUpdates();
     if (!result) {
       mainWindow?.webContents.send('app:updateStatus', 'error:Updates not available in local dev mode');
     }

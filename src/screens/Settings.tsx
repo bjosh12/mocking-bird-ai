@@ -283,8 +283,11 @@ export function Settings() {
                     setLastChecked(new Date());
                     try {
                       await (window as any).electronAPI?.app.checkForUpdates();
-                    } catch (e) {
+                    } catch (e: any) {
                       setUpdateStatus('error');
+                      // e.message usually looks like "Error invoking remote method 'app:checkForUpdates': Error: Cannot check for updates..."
+                      const msg = e.message ? e.message.split('Error: ').pop() : 'Check failed';
+                      setUpdateErrorMsg(msg);
                     }
                     // Give it 3s then reset spinner (actual result comes via onUpdateStatus)
                     setTimeout(() => setUpdateChecking(false), 3000);
