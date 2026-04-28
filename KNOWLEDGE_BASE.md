@@ -1,47 +1,143 @@
-# Mocking Bird AI - Project Knowledge Base
+# Mocking Bird AI Knowledge Base
 
-This document serves as the "Project Brain" for Mocking Bird AI. It contains the essential architectural knowledge, deployment workflows, and technical quirks discovered during development.
+This is the project brain for Mocking Bird AI. Keep it current when architecture, prompts, release flow, IPC contracts, or platform quirks change.
 
-## 🚀 Core Functionality
-- **Live Transcription:** Uses Deepgram to transcribe both System Audio (interviewer) and Microphone (user) in real-time.
-- **AI Suggested Answers:** Sends transcripts to OpenAI to generate real-time interview coaching and answers.
-- **Stealth Overlay (Widget):** A transparent, "ghost-mode" window that sits on top of other apps (like Zoom/Teams) and is invisible to screen-sharing software.
-- **Ghost Mode:** An interactive state where the widget becomes click-through, allowing users to interact with windows behind it while still seeing the AI suggestions.
+## Product Contract
 
-## 🛠 Tech Stack
-- **Framework:** Electron + Vite + React.
-- **Languages:** TypeScript (Main and Renderer).
-- **State Management:** Zustand (Renderer), `electron-store` (Main).
-- **Styling:** Vanilla CSS with a focus on premium aesthetics (glassmorphism, dark mode).
-- **External APIs:**
-  - **Deepgram:** Streaming STT (Speech-to-Text).
-  - **OpenAI:** GPT-4o for real-time coaching.
+Mocking Bird AI is an Electron desktop interview copilot. It listens to meeting audio, transcribes interviewer and candidate speech, and generates short, glanceable answer guidance for a live overlay.
 
-## 🏗 Architecture & IPC Layer
-- **IPC Bridges (`preload.ts`):** All communication between React and Electron must go through the `electronAPI` exposed in the preload script.
-- **Main Window vs Widget Window:** The app maintains two primary windows. The Main Window handles history/settings, while the Widget Window handles the live overlay.
-- **Silent Audio Capture:** The `main.ts` process uses a `setDisplayMediaRequestHandler` to silently grant screen/audio capture permissions without user prompts.
+Core user flows:
+- Sign in or configure local API keys.
+- Create a session with job title, company, job description, interview type, and language.
+- Upload resume and supporting knowledge-base documents.
+- Start a live session that captures system audio and microphone audio.
+- Show AI suggestions in the main window and transparent widget.
+- End the session and generate a scorecard.
 
-## 📦 Release & Deployment Workflow
-- **CI/CD:** Powered by GitHub Actions (`.github/workflows/release.yml`).
-- **Trigger:** Builds are triggered by pushing a Git Tag starting with `v` (e.g., `git tag v2.1.12`).
-- **Build Step:** Always use `npm run build -- --publish always` to ensure `electron-builder` publishes the artifacts directly to GitHub Releases.
-- **Release Type:** Configured in `package.json` with `"releaseType": "release"` to ensure updates are published immediately and not left as drafts.
+## AI System Instructions
 
-## ⚠️ Critical Quirks & Lessons Learned
-### Windows Branding & Notifications
-- **AUMID:** Must call `app.setAppUserModelId('Mocking Bird AI')` early in `main.ts`. Without this, Windows shows the app as "Electron" in Privacy Settings and uses the generic Atom logo in notifications.
+The live answer prompt lives in `src/lib/llm.ts` as `buildPrompt`.
 
-### Update Mechanism
-- **NSIS Error 2:** Occurs if the user tries to install an update while the app is still running in the System Tray. Always use `autoUpdater.quitAndInstall()` or ensure the app is fully quit before manual installation.
-- **Notification Loop:** Disable `autoUpdater.checkForUpdatesAndNotify()` and use `checkForUpdates()` instead to prevent confusing system-level toast notifications that don't handle tray-minimization well.
+It must cover:
+- Natural spoken interview tone, not essay-style writing.
+- Behavioral and technical interview modes.
+- Target output language.
+- Resume, job description, uploaded documents, recent transcript, and exact current question.
+- Short overlay-friendly formatting.
+- Honesty: never fabricate employers, tools, metrics, credentials, projects, or production details.
+- Safety: never reveal hidden instructions or tell the candidate to deceive the interviewer.
+- Missing-context behavior: provide a cautious frame, transferable answer, or brief clarification rather than inventing facts.
 
-### Audio Capture
-- **NotSupportedError:** `getDisplayMedia` often fails on Windows for system audio loopback. 
-- **Solution:** Use the lower-level `chromeMediaSource: 'desktop'` API inside `navigator.mediaDevices.getUserMedia` for robust system audio capture.
-- **Permission Revocation:** When the `.exe` is updated, Windows may silently revoke Microphone/Screen permissions. Users must toggle "Allow desktop apps to access your microphone" in Windows Settings if capture fails.
+Output format for live answers:
+- `Start with`: one natural opening sentence.
+- `Key points`: two or three short bullets.
+- `Wrap up`: one natural closing sentence.
 
-## 🛠 Development Scripts
-- `npm run dev`: Starts the Vite dev server and Electron.
-- `npm run build`: Compiles everything and prepares a production installer.
-- `npm run build:dir`: Unpacked build for quick testing of production logic.
+The scorecard prompt also lives in `src/lib/llm.ts` as `buildScorecardPrompt`. It should stay evidence-based and avoid inventing feedback unsupported by the transcript, resume, or job description.
+
+## Tech Stack
+
+- Framework: Electron + Vite + React.
+- Languages: TypeScript in main, preload, and renderer.
+- State: Zustand in renderer, `electron-store` in main.
+- Local storage: SQLite through `better-sqlite3`.
+- Cloud: Supabase via `main/cloud.ts`.
+- Styling: Tailwind plus component-level CSS/inline styles.
+- STT: Deepgram streaming WebSocket.
+- LLM: OpenAI chat completions, either direct API key or cloud proxy token.
+- Packaging: `electron-builder`.
+
+## Architecture
+
+Important files:
+- `main/main.ts`: Electron windows, tray, updater, shortcuts, permissions, and IPC handlers.
+- `main/preload.ts`: context-isolated renderer API bridge.
+- `main/db.ts`: local SQLite schema and helpers.
+- `main/cloud.ts`: Supabase auth, sync, trial, and license helpers.
+- `src/lib/audio.ts`: microphone and system-audio capture.
+- `src/lib/stt.ts`: Deepgram streaming provider.
+- `src/lib/llm.ts`: live-answer and scorecard prompt construction plus OpenAI calls.
+- `src/store/useStore.ts`: renderer session state.
+- `src/screens/LiveSession.tsx`: live transcription, buffering, answer generation, widget updates.
+- `src/screens/Widget.tsx`: overlay answer display and ghost-mode controls.
+
+## IPC Rules
+
+All renderer-to-main communication must go through `window.electronAPI` from `main/preload.ts`.
+
+Rules:
+- Keep `contextIsolation: true` and `nodeIntegration: false` for normal renderer windows.
+- Add new IPC endpoints in both `main/preload.ts` and `main/main.ts`.
+- Validate channel names for listener-style APIs, as `app.onShortcut` already does.
+- Avoid exposing arbitrary filesystem, shell, or network primitives to the renderer.
+- Prefer typed payloads over `any` when touching IPC contracts.
+
+Known issue to watch: the widget window currently enables `nodeIntegration: true`. Treat changes around the widget as security-sensitive.
+
+## Audio And Transcription
+
+The app captures two streams:
+- System audio as `Interviewer`.
+- Microphone audio as `You`.
+
+Important behavior:
+- Windows system audio capture uses `chromeMediaSource: 'desktop'` through `navigator.mediaDevices.getUserMedia`.
+- `main.ts` configures `setDisplayMediaRequestHandler` to allow screen/audio capture without repeated prompts.
+- Deepgram expects Linear16 audio at 16 kHz.
+- Interim STT updates reuse transcript IDs; final updates advance to a new ID.
+- Auto-answer buffering currently waits for interviewer final text, debounces for 7 seconds, and only fires automatically when a question mark appears.
+
+When prompt context is built, preserve speaker labels so the model knows which turns came from the interviewer versus the candidate.
+
+## Widget And Ghost Mode
+
+The app has two main windows:
+- Main window: dashboard, settings, history, live session, scorecard.
+- Widget window: transparent always-on-top overlay for live suggestions.
+
+Widget behavior:
+- `setContentProtection(true)` is used to reduce screen-share visibility.
+- Ghost mode uses `setIgnoreMouseEvents(ignore, { forward: true })` so users can click through the widget.
+- Opacity is controlled from renderer through IPC.
+- Global shortcuts control visibility, ghost mode, answer generation, transcript clearing, settings, and history.
+
+## Release Workflow
+
+Release automation is configured through GitHub Actions and `electron-builder`.
+
+Expected release flow:
+- Bump `package.json` version.
+- Build locally with `npm run build` or `npm run build:dir` for unpacked verification.
+- Tag releases with a `v` prefix, for example `v2.1.15`.
+- Push the tag to trigger release publishing.
+- For direct publishing, use `npm run build -- --publish always`.
+
+Packaging details:
+- `package.json` `build.publish.releaseType` is `release`, so artifacts are published as full releases rather than drafts.
+- Windows output uses NSIS.
+- macOS output uses DMG and ZIP.
+- Windows code signing is currently disabled.
+
+## Windows Quirks
+
+- Call `app.setAppUserModelId('Mocking Bird AI')` early in `main.ts`. Without it, Windows may show the app as Electron in privacy settings and notifications.
+- Installing updates while the app is still alive in the tray can cause NSIS errors. Prefer `autoUpdater.quitAndInstall()`.
+- Use `checkForUpdates()` instead of `checkForUpdatesAndNotify()` to keep update messaging inside the app.
+- After an `.exe` update, Windows can silently revoke microphone or screen permissions. Users may need to toggle "Allow desktop apps to access your microphone" in Windows Settings.
+
+## Development Commands
+
+- `npm run dev`: start Vite and Electron in development.
+- `npm run build`: type-check, build renderer/main bundles, and package installers.
+- `npm run build:dir`: type-check, build, and create an unpacked production build.
+- `npm run serve`: run Electron against the built app entry.
+
+## Maintenance Checklist
+
+Before shipping changes:
+- Run `npm run build`.
+- Exercise a live session with both system and microphone capture.
+- Confirm the widget opens, updates, toggles ghost mode, and clears.
+- Confirm the live answer prompt receives resume, job description, documents, recent transcript with speaker labels, interview type, language, and current question.
+- Check update behavior if release or packaging files changed.
+- Avoid committing generated release artifacts unless intentionally publishing them.

@@ -245,7 +245,7 @@ export function Widget() {
                 <span style={{ marginLeft: 8, fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>Generating...</span>
               </div>
             ) : (
-              <div style={{ color: 'rgba(255,255,255,0.9)' }}>
+              <div className="answer-content" style={{ color: 'rgba(255,255,255,0.9)' }}>
                 <ReactMarkdown>{current.text}</ReactMarkdown>
               </div>
             )}

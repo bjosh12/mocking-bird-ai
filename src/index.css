@@ -47,4 +47,21 @@
 
   /* Selection color */
   ::selection { background: rgba(167,139,250,0.25); color: #fff; }
+
+  /* Restore list styles stripped by Tailwind preflight — used by ReactMarkdown answer output */
+  .answer-content ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .answer-content ul li {
+    line-height: 1.6;
+    padding-left: 0.25rem;
+  }
+  .answer-content p {
+    margin: 0;
+    line-height: 1.6;
+  }
 }

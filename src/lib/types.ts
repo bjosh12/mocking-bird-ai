@@ -6,6 +6,8 @@ export interface Session {
   job_description: string;
   interview_type: string;
   language: string;
+  model?: string;
+  extra_instructions?: string;
   created_at: string;
 }
 

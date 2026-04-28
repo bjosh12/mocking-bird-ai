@@ -487,7 +487,7 @@ export function LiveSession() {
                     </button>
                   </div>
                   <div style={{ padding: '1.25rem', fontSize: '0.9rem', lineHeight: 1.8, color: 'rgba(255,255,255,0.9)' }}>
-                    <div className="prose prose-sm dark:prose-invert">
+                    <div className="answer-content">
                       <ReactMarkdown>{latest.generated_text}</ReactMarkdown>
                     </div>
                   </div>
@@ -522,7 +522,7 @@ export function LiveSession() {
                         </button>
                       </summary>
                       <div style={{ padding: '0.75rem 1rem', fontSize: '0.82rem', lineHeight: 1.7, color: 'rgba(255,255,255,0.75)', background: 'rgba(255,255,255,0.01)', borderRadius: '0 0 8px 8px', borderLeft: '2px solid rgba(167,139,250,0.15)', marginTop: 2 }}>
-                        <div className="prose prose-sm dark:prose-invert">
+                        <div className="answer-content">
                           <ReactMarkdown>{ans.generated_text}</ReactMarkdown>
                         </div>
                       </div>

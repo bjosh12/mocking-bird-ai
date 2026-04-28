@@ -384,7 +384,4 @@ async function getMachineId() {
 }
 ipcMain.handle('license:getMachineId', () => getMachineId());
 ipcMain.handle('license:verify', async (_, licenseKey) => ({ machineId: await getMachineId(), licenseKey }));
-ipcMain.handle('app:getSources', async () => {
-  return await desktopCapturer.getSources({ types: ['screen', 'window'], fetchWindowIcons: false });
-});
 ipcMain.handle('ping', () => 'pong');
