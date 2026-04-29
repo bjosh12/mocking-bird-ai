@@ -1,7 +1,11 @@
 export function buildScorecardPrompt(resume: string, jd: string, transcripts: string[]) {
-  return `
-You are an expert interview evaluator. Review the following interview transcript where "Interviewer" asks questions and "You" (the candidate) answers.
-Evaluate the candidate's performance based on their resume and the job description.
+  return `You are a senior hiring coach evaluating a mock interview. Your job is to score the candidate fairly and helpfully — the goal is to help them improve, not to penalise them.
+
+IMPORTANT SCORING PHILOSOPHY:
+- Judge answers by how well they bridge the candidate's ACTUAL background to THIS specific role — not by whether they already have the target industry on their resume.
+- A candidate from a different industry who clearly translates their skills should score higher than one who has the right industry but gives vague answers.
+- If you see near-duplicate answers (same question asked twice due to a technical glitch), score only the better one and note it as a system issue, not a candidate issue.
+- Be specific: quote actual phrases from the transcript when praising or critiquing.
 
 === Job Description ===
 ${jd}
@@ -12,19 +16,25 @@ ${resume}
 === Interview Transcript ===
 ${transcripts.join('\n')}
 
-Generate a comprehensive Scorecard for the candidate. Use the following markdown structure:
+Generate a scorecard using EXACTLY this markdown structure:
+
 # Overall Score: [0-100]/100
 
-## Strengths
-- Point 1
-- Point 2
+## Score Breakdown
+| Criterion | Score | Notes |
+|---|---|---|
+| Relevance to Role & Company | /20 | Did answers connect to the specific JD requirements? |
+| Use of Concrete Examples | /20 | Named employers, numbers, outcomes — not vague claims |
+| STAR Structure | /20 | Clear Situation → Action → Result in behaviorals |
+| Industry/Role Translation | /20 | Bridged their background to what THIS company needs |
+| Communication Clarity | /20 | Natural, confident, no rambling or filler |
 
-## Areas for Improvement
-- Point 1
-- Point 2
+## Strengths (2–3 specific things they did well, with quotes)
 
-## Detailed Feedback
-(Provide a brief paragraph analyzing their technical accuracy, conciseness, and delivery)
+## What to Improve (2–3 specific, actionable fixes — not generic advice)
+
+## One-Sentence Coaching Tip
+(The single most impactful change for the next interview)
 `;
 }
 
@@ -112,17 +122,35 @@ export function buildPrompt(
     typeInstructions = 'Answer conversationally, referencing the candidate\'s actual background and the target company whenever relevant.';
   }
 
+  // Extract the top requirements from the JD so the model knows what to bridge to
+  const jdRequirements = jd
+    ? jd
+        .split('\n')
+        .filter(l => /^[-•*]\s|^\d+\.\s/.test(l.trim()) || l.trim().length > 30)
+        .filter(l => /experience|skill|background|knowledge|ability|mindset|track record|proven|familiar|understand/i.test(l))
+        .slice(0, 5)
+        .map(l => l.replace(/^[-•*\d.]\s*/, '').trim())
+        .filter(Boolean)
+    : [];
+
+  const bridgeBlock = jdRequirements.length > 0
+    ? `KEY ROLE REQUIREMENTS (bridge your background to these explicitly in every answer):
+${jdRequirements.map(r => `• ${r}`).join('\n')}`
+    : '';
+
   return `You are a live interview coach. Write bullet points the candidate can read and say out loud naturally, as if speaking — not reading from a resume.
 
 STYLE: Warm, first-person, conversational. Like how a confident person actually talks in an interview. Complete thoughts, natural flow.
 ${typeInstructions}
 
 FORMAT: Output ONLY a bullet list. No intro, no headers, no closing line. Each bullet starts with "- ".
-- 3 to 5 bullets depending on the question depth
+- 4 to 5 bullets depending on the question depth
 - Each bullet is 1-2 complete sentences (not fragments, not one-word answers)
 - Avoid hollow filler: "leverage synergies", "results-driven", "go-getter"
-- Ground every bullet in the resume above. If a bullet would apply to anyone, rewrite it to name a specific company, project, or metric from the resume.
+- Ground every bullet in the resume. Name a specific company, project, or metric — never write something that could apply to any candidate.
+- At least one bullet must explicitly connect past experience to the target company/role. Say WHY it transfers, not just what you did.
 ${extraInstructions ? `- Tone note: ${extraInstructions}` : ''}
+${bridgeBlock ? `\n${bridgeBlock}` : ''}
 
 ${typeBlock}
 
@@ -174,10 +202,10 @@ export class OpenAIProvider implements LLMProvider {
     try {
       const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.token}` };
       const bodyStr = JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [{ role: 'system', content: prompt }],
-        max_tokens: 500,
-        temperature: 0.7,
+        max_tokens: 1500,
+        temperature: 0.4,
       });
 
       let data;
