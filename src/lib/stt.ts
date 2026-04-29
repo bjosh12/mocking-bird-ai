@@ -30,7 +30,7 @@ export class DeepgramProvider implements STTProvider {
     this.lastError = null;
     return new Promise((resolve, reject) => {
       try {
-        const url = `wss://api.deepgram.com/v1/listen?model=nova-2&punctuate=true&interim_results=true&filler_words=true&language=${this.language}&encoding=linear16&sample_rate=16000&endpointing=300&utterance_end_ms=1000&vad_events=true`;
+        const url = `wss://api.deepgram.com/v1/listen?model=nova-2&punctuate=true&interim_results=true&filler_words=true&language=${this.language}&encoding=linear16&sample_rate=16000&endpointing=500&utterance_end_ms=2000&vad_events=true`;
         this.socket = new WebSocket(url, ['token', this.apiKey]);
 
         this.socket.onopen = () => {
@@ -60,10 +60,8 @@ export class DeepgramProvider implements STTProvider {
               return;
             }
 
-            // Handle speech_final — Deepgram marks a pause-detected boundary
-            if (received.speech_final === true && this.utteranceEndCallback) {
-              this.utteranceEndCallback();
-            }
+            // NOTE: speech_final fires on every pause boundary (too aggressive for long questions).
+            // We intentionally do NOT trigger utteranceEnd on speech_final — only on UtteranceEnd above.
 
             const transcript = received.channel?.alternatives[0]?.transcript;
             if (transcript && received.is_final !== undefined) {

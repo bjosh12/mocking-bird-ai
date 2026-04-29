@@ -212,20 +212,20 @@ export function LiveSession() {
             console.log('[AutoAnswer] Duplicate skipped:', trimmed);
             // Reset safety-net timer
             if (autoAnswerTimer.current) clearTimeout(autoAnswerTimer.current);
-            autoAnswerTimer.current = setTimeout(fireAutoAnswer, 1500);
+            autoAnswerTimer.current = setTimeout(fireAutoAnswer, 3000);
             return;
           }
 
           questionBufferRef.current.push(trimmed);
           console.log('[AutoAnswer] Buffered:', questionBufferRef.current);
 
-          // 1.5 s safety-net fallback (replaced by utterance-end events when they fire)
+          // 3 s safety-net fallback (UtteranceEnd is the primary trigger; this catches edge cases)
           if (autoAnswerTimer.current) clearTimeout(autoAnswerTimer.current);
-          autoAnswerTimer.current = setTimeout(fireAutoAnswer, 1500);
+          autoAnswerTimer.current = setTimeout(fireAutoAnswer, 3000);
         }
       });
 
-      // Primary trigger: Deepgram UtteranceEnd / speech_final events
+      // Primary trigger: Deepgram UtteranceEnd event (speech_final is intentionally NOT used — too aggressive)
       sttSystem.current.onUtteranceEnd(() => {
         if (autoAnswerTimer.current) { clearTimeout(autoAnswerTimer.current); autoAnswerTimer.current = null; }
         fireAutoAnswer();
