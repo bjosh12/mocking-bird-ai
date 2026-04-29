@@ -41,7 +41,7 @@ export const useStore = create<AppState>((set) => ({
   documents: [],
   isLicensed: false,
   licenseKey: null,
-  selectedModel: 'gpt-4o-mini',
+  selectedModel: 'gpt-4o',
   extraInstructions: 'Use everyday words so it sounds natural.',
   anthropicKey: null,
 
